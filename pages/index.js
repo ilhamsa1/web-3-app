@@ -125,6 +125,26 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      {/* <h1>
+        create nft
+      </h1>
+      <input
+        type="file"
+        name="Asset"
+        className="my-4"
+        onChange={onChange}
+      />
+       <button
+        onClick={uploadToIPFS}
+      >
+        Mint2
+      </button>
+
+      <button onClick={() => {
+        price()
+      }}>
+        test
+      </button> */}
       <button onClick={() => {
         connectWallet()
       }}>
@@ -137,7 +157,58 @@ export default function Home() {
         a
       </button> */}
 
+      {/* <div>
+        <button>
+          initialize
+        </button>
+        <div>
+          <button
+           onClick={() => {
+            getBalance()
+           }}
+          >
+            balance
+          </button>
+        </div>
+        <div>
+          <button
+           onClick={() => {
+            fund(currentAccount)
+           }}
+          >
+            fund
+          </button>
+        </div>
+        <div>
+          {connectedAddress} connectedAddress
+        </div>
+      </div>
+
       <div>
+        <h1>
+          Project
+        </h1>
+        <div>
+          <button onClick={getConfig}>
+          getConfig
+          </button>
+        </div>
+        <div>
+          <button  onClick={() => submitProject('sample_project')}>
+          submit project
+          </button>
+        </div>
+      </div>
+      
+      <div>
+          <button onClick={getConfigQuestion}>
+            getconfig question
+          </button>
+        </div>
+ */}
+
+      {appStatus === 'connected' ? (
+        <div>
         <h1>
           Votes Hoax
         </h1>
@@ -161,12 +232,12 @@ export default function Home() {
                       {item.question}
                     </span>
                     <span style={{margin: '0 0.5rem'}}>
-                        <button onClick={() => {
+                        <button disabled={loadVote} onClick={() => {
                           handleUpvote(item.id)
                         }}>
                           true {item.upvote}
                         </button>
-                        <button onClick={() => {
+                        <button disabled={loadVote} onClick={() => {
                           handleDownvote(item.id)
                         }}>
                           false {item.downvote || '0'}
@@ -187,6 +258,7 @@ export default function Home() {
           </div>
         </div>
       </div>
+      ) : null}
     </div>
   )
 }
