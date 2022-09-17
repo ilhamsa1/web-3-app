@@ -1,8 +1,122 @@
+import { useState, useContext } from 'react'
 import Head from 'next/head'
 import Image from 'next/image'
+import { test, address, connect, initialize } from '../lib/contract'
 import styles from '../styles/Home.module.css'
 
+import { UserContext } from '../context/user-context'
+import { FaucetContext } from '../context/faucet-context'
+import { ProjectContext } from '../context/project-context'
+import { QuestionContext } from '../context/question-context'
+
+import client from '../lib/infura'
+
 export default function Home() {
+  const { appStatus, connectWallet, currentAccount } = useContext(UserContext)
+  const { connectedAddress, getBalance,fund } = useContext(FaucetContext)
+  const { getConfig, submitProject  } = useContext(ProjectContext)
+  const {
+    getConfig: getConfigQuestion,
+    askQuestion,
+    questions,
+
+    fetchQuestion,
+    fetchUpvotes,
+    fetchDownvotes,
+
+    upVoteQuestion,
+    downVoteQuestion,
+  } = useContext(QuestionContext)
+
+  const [sentence, setSentence] = useState('')
+  const [load, setLoad] = useState(false)
+  const [loadVote, setLoadVote]= useState(false)
+  const [fileUrl, setFileUrl] = useState(null)
+
+  async function onChange(e) {
+    /* upload image to IPFS */
+    const file = e.target.files[0]
+    try {
+      const added = await client.add(
+        file,
+        {
+          progress: (prog) => console.log(`received: ${prog}`),
+        },
+      )
+      const url = `https://universe.infura-ipfs.io/ipfs/${added.path}`
+      setFileUrl(url)
+    } catch (error) {
+      console.log('Error uploading file: ', error)
+    }
+  }
+
+  async function uploadToIPFS() {
+    const formInput = { name: 'dsds', description: '23sa', price: 1 }
+    // if (!name || !description || !price || !fileUrl) return
+    /* first, upload metadata to IPFS */
+    const data = JSON.stringify({
+      name: formInput.name,
+      description: formInput.description,
+      image: fileUrl,
+    })
+    try {
+      console.log(data, 'uiohss')
+
+      const added = await client.add(data)
+      const url = `https://universe.infura-ipfs.io/ipfs/${added.path}`
+      /* after metadata is uploaded to IPFS, return the URL to use it in the transaction */
+      console.log(url)
+      // await accountStore.mintToken()
+      return url
+    } catch (error) {
+      console.log('Error uploading file: ', error)
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      setLoad(true)
+      const sendTx = await askQuestion(sentence)
+      await sendTx.wait();
+
+      await fetchQuestion()
+      setSentence('')
+    } catch (e) {
+      alert(e.message)
+    } finally {
+      setLoad(false)
+    }
+  }
+
+  const handleUpvote = async (questionId) => {
+    try {
+      setLoadVote(questionId)
+      const sendTx = await upVoteQuestion(questionId)
+      await sendTx.wait();
+      await fetchUpvotes()
+      await fetchQuestion()
+    } catch (e) {
+      alert(e.message)
+    } finally {
+      setLoadVote(false)
+    }
+  }
+
+  const handleDownvote = async (questionId) => {
+    try {
+      setLoadVote(questionId)
+      const sendTx = await downVoteQuestion(questionId)
+      await sendTx.wait();
+      await fetchDownvotes()
+      await fetchQuestion()
+    } catch (e) {
+      alert(e.message)
+    } finally {
+      setLoadVote(false)
+    }
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -11,59 +125,139 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
+      <h1>
+        create nft
+      </h1>
+      <input
+        type="file"
+        name="Asset"
+        className="my-4"
+        onChange={onChange}
+      />
+       <button
+        onClick={uploadToIPFS}
+      >
+        Mint2
+      </button>
+
+      <button onClick={() => {
+        price()
+      }}>
+        test
+      </button>
+      <button onClick={() => {
+        connectWallet()
+      }}>
+        connect
+      </button>
+      address :{currentAccount} {appStatus}
+      {/* <button onClick={() => {
+        initialize()
+      }}>
+        a
+      </button> */}
+
+      <div>
+        <button>
+          initialize
+        </button>
+        <div>
+          <button
+           onClick={() => {
+            getBalance()
+           }}
+          >
+            balance
+          </button>
+        </div>
+        <div>
+          <button
+           onClick={() => {
+            fund(currentAccount)
+           }}
+          >
+            fund
+          </button>
+        </div>
+        <div>
+          {connectedAddress} connectedAddress
+        </div>
+      </div>
+
+      <div>
+        <h1>
+          Project
+        </h1>
+        <div>
+          <button onClick={getConfig}>
+          getConfig
+          </button>
+        </div>
+        <div>
+          <button  onClick={() => submitProject('sample_project')}>
+          submit project
+          </button>
+        </div>
+      </div>
+      
+      <div>
+          <button onClick={getConfigQuestion}>
+            getconfig question
+          </button>
+        </div>
+
+
+      <div>
+        <h1>
+          Votes Hoax
         </h1>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/canary/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+        <div>
+          <form onSubmit={handleSubmit}>
+            <input name="sentences" value={sentence} onChange={(e) => {
+              setSentence(e.target.value)
+            }} placeholder="Make some fact"></input>
+            <button disabled={load} type="submit">
+              submit
+            </button>
+          </form>
+          <div>
+            <ul>
+            {questions.map((item) => {
+              return (
+                <li key={item.id} style={{ margin: '1rem 0' }}>
+                  <div>
+                    <span>
+                      {item.question}
+                    </span>
+                    <span style={{margin: '0 0.5rem'}}>
+                        <button onClick={() => {
+                          handleUpvote(item.id)
+                        }}>
+                          true {item.upvote}
+                        </button>
+                        <button onClick={() => {
+                          handleDownvote(item.id)
+                        }}>
+                          false {item.downvote || '0'}
+                        </button>
+                      </span>
+                      {loadVote === item.id ? (
+                      <span>
+                        loading ...
+                      </span>
+                      ) :
+                        null
+                      }
+                  </div>
+                </li>
+              )
+            })}
+            </ul>
+          </div>
         </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <span className={styles.logo}>
-            <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
-          </span>
-        </a>
-      </footer>
+      </div>
     </div>
   )
 }
+
