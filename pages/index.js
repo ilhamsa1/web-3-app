@@ -125,7 +125,17 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      
+      <button onClick={() => {
+        connectWallet()
+      }}>
+        connect
+      </button>
+      address :{currentAccount} {appStatus}
+      {/* <button onClick={() => {
+        initialize()
+      }}>
+        a
+      </button> */}
 
       <div>
         <h1>
